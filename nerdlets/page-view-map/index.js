@@ -7,6 +7,9 @@ import {
   Spinner,
   Grid,
   GridItem,
+  Stack,
+  StackItem,
+  AutoSizer,
   PlatformStateContext,
   NerdletStateContext,
   NerdGraphQuery,
@@ -15,6 +18,7 @@ import {
 } from 'nr1';
 import { mapData, entityQuery, getMarkerColor } from './util';
 import DetailsPanel from './details-panel';
+import SummaryBar from '../../components/summary-bar';
 
 export default class PageViewMap extends React.Component {
   constructor(props) {
@@ -23,7 +27,8 @@ export default class PageViewMap extends React.Component {
     this.state = {
       detailsOpen: false,
       openedFacet: null,
-      mapCenter: [10.5731, -7.5898]
+      mapCenter: [39.8282, -98.5795],
+      zoom: 8
     };
 
     this.togglePageViewDetails = this.togglePageViewDetails.bind(this);
@@ -34,14 +39,18 @@ export default class PageViewMap extends React.Component {
       this.setState({
         detailsOpen: true,
         openedFacet: facet,
-        mapCenter: center
+        cityCode: facet.facet[0],
+        stateCode: facet.facet[1],
+        countryCode: facet.facet[2]
       });
+      this.mapRef.leafletElement.flyTo(center, 10);
     } else {
       // debugger;
       this.setState({
         detailsOpen: false,
         openedFacet: null
       });
+      this.mapRef.leafletElement.flyTo(this.state.mapCenter, 5);
     }
   };
 
@@ -52,119 +61,147 @@ export default class PageViewMap extends React.Component {
         {launcherUrlState => (
           <NerdletStateContext.Consumer>
             {nerdletUrlState => (
-              <NerdGraphQuery query={entityQuery(nerdletUrlState.entityGuid)}>
-                {({ loading, error, data }) => {
-                  if (loading) {
-                    return <Spinner fillContainer />;
-                  }
+              <AutoSizer>
+                {({height, width}) => (<NerdGraphQuery query={entityQuery(nerdletUrlState.entityGuid)}>
+                  {({ loading, error, data }) => {
+                    if (loading) {
+                      return <Spinner fillContainer />;
+                    }
 
-                  if (error) {
-                    return (
-                      <>
-                        <HeadingText>An error ocurred</HeadingText>
-                        <p>{error.message}</p>
-                      </>
-                    );
-                  }
+                    if (error) {
+                      return (
+                        <>
+                          <HeadingText>An error ocurred</HeadingText>
+                          <p>{error.message}</p>
+                        </>
+                      );
+                    }
 
-                  // console.debug(data);
-                  const {
-                    accountId,
-                    servingApmApplicationId,
-                    applicationId
-                  } = data.actor.entity;
-                  const appId = servingApmApplicationId || applicationId;
-                  const { entity } = data.actor;
-                  const { apdexTarget } = data.actor.entity.settings || 0.5;
-                  // return "Hello";
-                  return appId ? (
-                    <NerdGraphQuery
-                      query={mapData(accountId, appId, launcherUrlState)}
-                    >
-                      {({ loading, error, data }) => {
-                        if (loading) {
-                          return <Spinner fillContainer />;
-                        }
+                    // console.debug(data);
+                    const {
+                      accountId,
+                      servingApmApplicationId,
+                      applicationId
+                    } = data.actor.entity;
+                    const appId = servingApmApplicationId || applicationId;
+                    const { entity } = data.actor;
+                    const { apdexTarget } = data.actor.entity.settings || 0.5;
+                    // return "Hello";
+                    return appId ? (
+                      <NerdGraphQuery
+                        query={mapData(accountId, appId, launcherUrlState)}
+                      >
+                        {({ loading, error, data }) => {
+                          if (loading) {
+                            return <Spinner fillContainer />;
+                          }
 
-                        if (error) {
+                          if (error) {
+                            return (
+                              <>
+                                <HeadingText>An error ocurred</HeadingText>
+                                <p>{error.message}</p>
+                              </>
+                            );
+                          }
+
+                          // console.debug(data);
+                          const { results } = data.actor.account.mapData;
                           return (
-                            <>
-                              <HeadingText>An error ocurred</HeadingText>
-                              <p>{error.message}</p>
-                            </>
-                          );
-                        }
-
-                        // console.debug(data);
-                        const { results } = data.actor.account.mapData;
-                        return (
-                          <Grid
-                            spacingType={[
-                              Grid.SPACING_TYPE.NONE,
-                              Grid.SPACING_TYPE.NONE
-                            ]}
-                          >
-                            <GridItem columnSpan={detailsOpen ? 8 : 12}>
-                              <Map
-                                className="containerMap"
-                                style={{ height: '99vh' }}
-                                center={mapCenter}
-                                zoom={3}
-                                zoomControl
-                                ref={ref => {
-                                  this.mapRef = ref;
-                                }}
-                              >
-                                <TileLayer
-                                  attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
-                                {results.map((pt, i) => {
-                                  const center = [pt.lat, pt.lng];
-                                  return (
-                                    <CircleMarker
-                                      key={`circle-${i}`}
-                                      center={center}
-                                      color={getMarkerColor(pt.y, apdexTarget)}
-                                      radius={Math.log(pt.x) * 3}
-                                      onClick={() => {
-                                        this.togglePageViewDetails(pt, center);
+                            <Stack
+                              fullWidth
+                              horizontalType={Stack.HORIZONTAL_TYPE.FILL}
+                              directionType={Stack.DIRECTION_TYPE.VERTICAL}
+                              gapType={Stack.GAP_TYPE.TIGHT}
+                              verticalType={Stack.VERTICAL_TYPE.FILL}
+                              //preview
+                            >
+                              {/*}
+                              <StackItem shrink={true}>
+                              <h2 id="prototype">This Nerdlet is an active prototype meant to demonstrate capabilities and help refine requirements.</h2>
+                              </StackItem>
+                              {*/}
+                              <StackItem shrink={true}>
+                                <SummaryBar appName={entity.name} accountId={accountId} launcherUrlState={launcherUrlState} />
+                              </StackItem>
+                              <StackItem>
+                                <Grid
+                                  spacingType={[
+                                    Grid.SPACING_TYPE.NONE,
+                                    Grid.SPACING_TYPE.NONE
+                                  ]}
+                                >
+                                  <GridItem columnSpan={detailsOpen ? 8 : 12}>
+                                    <Map
+                                      className="containerMap"
+                                      style={{height: `${height-130}px`}}
+                                      center={mapCenter}
+                                      zoom={5}
+                                      zoomControl
+                                      ref={ref => {
+                                        this.mapRef = ref;
                                       }}
-                                    />
-                                  );
-                                })}
-                              </Map>
-                            </GridItem>
-                            {openedFacet && (
-                              <GridItem columnSpan={4}>
-                                <DetailsPanel
-                                  appId={appId}
-                                  accountId={accountId}
-                                  openedFacet={openedFacet}
-                                  launcherUrlState={launcherUrlState}
-                                  togglePageViewDetails={
-                                    this.togglePageViewDetails
-                                  }
-                                />
-                              </GridItem>
-                            )}
-                          </Grid>
-                        );
-                      }}
-                    </NerdGraphQuery>
-                  ) : (
-                    <div style={{ width: '50%', margin: 'auto' }}>
-                      <HeadingText>
-                        No location data is available for this app
-                      </HeadingText>
-                      <BlockText>
-                        {entity.name} does not have PageView events with an
-                        associated appId.
-                      </BlockText>
-                    </div>
-                  );
-                }}
-              </NerdGraphQuery>
+                                    >
+                                      {/* See more map overlays at: http://leaflet-extras.github.io/leaflet-providers/preview/*/}
+                                      {/*}
+                                      <TileLayer
+                                        attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                      />
+                                    {*/}
+                                      <TileLayer
+                                            attribution='Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+                                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                                      />
+                                      {results.map((pt, i) => {
+                                        const center = [pt.lat, pt.lng];
+                                        return (
+                                          <CircleMarker
+                                            key={`circle-${i}`}
+                                            center={center}
+                                            color={getMarkerColor(pt.y, apdexTarget)}
+                                            radius={Math.log(pt.x) * 3}
+                                            onClick={() => {
+                                              this.togglePageViewDetails(pt, center);
+                                            }}
+                                          />
+                                        );
+                                      })}
+                                    </Map>
+                                  </GridItem>
+                                  {openedFacet && (
+                                    <GridItem columnSpan={4}>
+                                      <DetailsPanel
+                                        appId={appId}
+                                        accountId={accountId}
+                                        openedFacet={openedFacet}
+                                        launcherUrlState={launcherUrlState}
+                                        togglePageViewDetails={
+                                          this.togglePageViewDetails
+                                        }
+                                      />
+                                    </GridItem>
+                                  )}
+                                </Grid>
+                              </StackItem>
+                            </Stack>
+                          );
+                        }}
+                      </NerdGraphQuery>
+                    ) : (
+                      <div style={{ width: '50%', margin: 'auto' }}>
+                        <HeadingText>
+                          No location data is available for this app
+                        </HeadingText>
+                        <BlockText>
+                          {entity.name} does not have PageView events with an
+                          associated appId.
+                        </BlockText>
+                      </div>
+                    );
+                  }}
+              </NerdGraphQuery>)}
+              </AutoSizer>
             )}
           </NerdletStateContext.Consumer>
         )}

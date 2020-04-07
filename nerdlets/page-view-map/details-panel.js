@@ -33,7 +33,8 @@ export default class DetailsPanel extends React.Component {
           <StackItem className="details-panel-headers">
             <h3 className="details-panel-header">
               {openedFacet.facet[0] ? `${openedFacet.facet[0]}, ` : ''}
-              {openedFacet.facet[1]}
+              {openedFacet.facet[1] ? `${openedFacet.facet[1]}, ` : ''}
+              {openedFacet.facet[2]}
             </h3>
             <span className="details-panel-subheader">
               {numeral(pageViewCount).format('0,0')} Pageviews
@@ -55,11 +56,15 @@ export default class DetailsPanel extends React.Component {
               accountId={accountId}
               query={`SELECT average(duration) FROM PageView WHERE appId = ${appId} ${
                 openedFacet.facet[0]
-                  ? ` WHERE regionCode = '${openedFacet.facet[0]}' `
+                  ? ` WHERE city = '${openedFacet.facet[0]}' `
                   : ''
               } ${
                 openedFacet.facet[1]
-                  ? ` WHERE countryCode = '${openedFacet.facet[1]}' `
+                  ? ` WHERE regionCode = '${openedFacet.facet[1]}' `
+                  : ''
+              } ${
+                openedFacet.facet[2]
+                  ? ` WHERE countryCode = '${openedFacet.facet[2]}' `
                   : ''
               } ${createSinceQueryFragment(launcherUrlState)} TIMESERIES`}
             />
@@ -71,11 +76,15 @@ export default class DetailsPanel extends React.Component {
               accountId={accountId}
               query={`SELECT average(backendDuration) FROM PageView WHERE appId = ${appId} ${
                 openedFacet.facet[0]
-                  ? ` WHERE regionCode = '${openedFacet.facet[0]}' `
+                  ? ` WHERE city = '${openedFacet.facet[0]}' `
                   : ''
               } ${
                 openedFacet.facet[1]
-                  ? ` WHERE countryCode = '${openedFacet.facet[1]}' `
+                  ? ` WHERE regionCode = '${openedFacet.facet[1]}' `
+                  : ''
+              } ${
+                openedFacet.facet[2]
+                  ? ` WHERE countryCode = '${openedFacet.facet[2]}' `
                   : ''
               } ${createSinceQueryFragment(launcherUrlState)} TIMESERIES `}
             />
@@ -87,11 +96,15 @@ export default class DetailsPanel extends React.Component {
               accountId={accountId}
               query={`SELECT average(domProcessingDuration) FROM PageView WHERE appId = ${appId} ${
                 openedFacet.facet[0]
-                  ? ` WHERE regionCode = '${openedFacet.facet[0]}' `
+                  ? ` WHERE city = '${openedFacet.facet[0]}' `
                   : ''
               } ${
                 openedFacet.facet[1]
-                  ? ` WHERE countryCode = '${openedFacet.facet[1]}' `
+                  ? ` WHERE regionCode = '${openedFacet.facet[1]}' `
+                  : ''
+              } ${
+                openedFacet.facet[2]
+                  ? ` WHERE countryCode = '${openedFacet.facet[2]}' `
                   : ''
               } ${createSinceQueryFragment(launcherUrlState)} TIMESERIES `}
             />

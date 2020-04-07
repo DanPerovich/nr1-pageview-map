@@ -1,8 +1,8 @@
 {
     "schemaType": "NERDLET",
     "id": "page-view-map",
-    "description": "Page View Map",
-    "displayName": "Page View Map",
+    "description": "Page View GeoMap",
+    "displayName": "Page View GeoMap",
     "entities": [{"domain": "BROWSER", "type": "APPLICATION"}],
     "actionCategory": "monitor"
 }

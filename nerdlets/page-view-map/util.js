@@ -20,7 +20,7 @@ export const mapData = (accountId, appId, launcherUrlState) => {
   const query = `{
     actor {
       account(id: ${accountId}) {
-        mapData: nrql(query: "SELECT count(*) as x, average(duration) as y, sum(asnLatitude)/count(*) as lat, sum(asnLongitude)/count(*) as lng FROM PageView FACET regionCode, countryCode WHERE appId = ${appId} ${createSinceQueryFragment(
+        mapData: nrql(query: "SELECT count(*) as x, average(duration) as y, sum(asnLatitude)/count(*) as lat, sum(asnLongitude)/count(*) as lng FROM PageView FACET city, regionCode, countryCode WHERE appId = ${appId} ${createSinceQueryFragment(
     launcherUrlState
   )}  LIMIT 1000 ") {
           results
